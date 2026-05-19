@@ -1,0 +1,44 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "email": "admin@test.com",
+      "password": "password123",
+      "name": "Admin User",
+      "role": "admin"
+    },
+    {
+      "id": "2",
+      "email": "user@test.com",
+      "password": "password123",
+      "name": "Test User",
+      "role": "user"
+    }
+  ],
+  "analytics": [
+    {
+      "id": 1,
+      "date": "2024-01-01",
+      "totalUsers": 1234,
+      "activeUsers": 856,
+      "totalRevenue": 125430,
+      "conversionRate": 3.24
+    }
+  ],
+  "activities": [
+    {
+      "id": 1,
+      "user": "Kanak Sharma",
+      "action": "Created Report",
+      "status": "Completed",
+      "timestamp": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "user": "Aditya Patel",
+      "action": "Updated Dashboard",
+      "status": "Pending",
+      "timestamp": "2024-01-15T11:00:00Z"
+    }
+  ]
+}
