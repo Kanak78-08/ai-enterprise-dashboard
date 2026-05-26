@@ -56,3 +56,25 @@ export interface ChartData {
   revenue?: number;
   analytics?: number;
 }
+
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  severity: "info" | "warning" | "error" | "success";
+  timestamp: string;
+}
+
+export interface Insight {
+  id: number;
+  title: string;
+  summary: string;
+  trend?: string;
+}
+
+export interface DashboardStat {
+  totalReports: number;
+  completedReports: number;
+  pendingReports: number;
+  failureRate: number; // percentage
+}

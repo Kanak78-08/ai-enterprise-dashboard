@@ -1,18 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Container,
-  Card,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Paper,
-  CircularProgress,
+  Skeleton,
 } from "@mui/material";
 import {
   TrendingUp as TrendingUpIcon,
@@ -20,57 +10,50 @@ import {
   ShowChart as RevenueIcon,
   Assignment as ReportsIcon,
 } from "@mui/icons-material";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
 import Sidebar from "../../components/layout/Sidebar";
 import Navbar from "../../components/layout/Navbar";
 import { dashboardService } from "../../services/dashboardService";
-import type { Activity, ChartData } from "../../types";
+import type { Activity, ChartData, DashboardStat } from "../../types";
+import DashboardHeader from "../../components/dashboard/DashboardHeader";
+import KpiCard from "../../components/dashboard/KpiCard";
+import ChartCard from "../../components/dashboard/ChartCard";
+import ActivityWidget from "../../components/dashboard/ActivityWidget";
+import NotificationWidget from "../../components/dashboard/NotificationWidget";
+import InsightsWidget from "../../components/dashboard/InsightsWidget";
+import LineAnalyticsChart from "../../components/charts/LineAnalyticsChart";
+import PieAnalyticsChart from "../../components/charts/PieAnalyticsChart";
+import BarAnalyticsChart from "../../components/charts/BarAnalyticsChart";
 
 interface DashboardProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
 }
 
-function Dashboard({ darkMode, setDarkMode }: DashboardProps) {
+const Dashboard: React.FC<DashboardProps> = ({ darkMode, setDarkMode }) => {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [analytics, setAnalytics] = useState<{
-    totalUsers: string | number;
-    activeUsers: string | number;
-    totalRevenue: string;
-    conversionRate: string;
-  }>({
-    totalUsers: "1,234",
-    activeUsers: "856",
-    totalRevenue: "$125,430",
-    conversionRate: "3.24%",
-  });
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [insights, setInsights] = useState<any[]>([]);
+  const [stats, setStats] = useState<DashboardStat | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [chartDataRes, activitiesRes, analyticsRes] = await Promise.all([
+        const [chartDataRes, activitiesRes, statsRes, notificationsRes, insightsRes] = await Promise.all([
           dashboardService.getChartData(),
           dashboardService.getActivities(),
-          dashboardService.getAnalytics(),
+          dashboardService.getDashboardStats(),
+          dashboardService.getNotifications(),
+          dashboardService.getInsights(),
         ]);
 
         setChartData(chartDataRes);
         setActivities(activitiesRes);
-        setAnalytics(analyticsRes);
+        setStats(statsRes);
+        setNotifications(notificationsRes);
+        setInsights(insightsRes);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -84,428 +67,96 @@ function Dashboard({ darkMode, setDarkMode }: DashboardProps) {
   const analyticsCards = [
     {
       title: "Total Reports",
-      value: analytics.totalUsers,
-      icon: UsersIcon,
+      value: stats ? stats.totalReports : <Skeleton width={80} variant="text" />,
+      icon: <UsersIcon sx={{ color: "#5844FF" }} />,
       color: "#5844FF",
-      bgColor: "rgba(88, 68, 255, 0.1)",
+      bgColor: "rgba(88, 68, 255, 0.08)",
       trend: "+12%",
     },
     {
       title: "Completed Reports",
-      value: analytics.activeUsers,
-      icon: TrendingUpIcon,
+      value: stats ? stats.completedReports : <Skeleton width={60} variant="text" />,
+      icon: <TrendingUpIcon sx={{ color: "#10B981" }} />,
       color: "#10B981",
-      bgColor: "rgba(16, 185, 129, 0.1)",
+      bgColor: "rgba(16, 185, 129, 0.08)",
       trend: "+5%",
     },
     {
       title: "Pending Reports",
-      value: analytics.totalRevenue,
-      icon: RevenueIcon,
+      value: stats ? stats.pendingReports : <Skeleton width={40} variant="text" />,
+      icon: <RevenueIcon sx={{ color: "#F59E0B" }} />,
       color: "#F59E0B",
-      bgColor: "rgba(245, 158, 11, 0.1)",
+      bgColor: "rgba(245, 158, 11, 0.08)",
       trend: "+18%",
     },
     {
-      title: "Failed Reports",
-      value: "92",
-      icon: ReportsIcon,
+      title: "Failure Rate",
+      value: stats ? `${stats.failureRate}%` : <Skeleton width={40} variant="text" />,
+      icon: <ReportsIcon sx={{ color: "#EF4444" }} />,
       color: "#EF4444",
-      bgColor: "rgba(239, 68, 68, 0.1)",
-      trend: "+8%",
+      bgColor: "rgba(239, 68, 68, 0.08)",
+      trend: "-2%",
     },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return "success";
-      case "Pending":
-        return "warning";
-      case "Failed":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
   const bgColor = darkMode ? "#0a0a0a" : "#f5f7fc";
-  const cardBg = darkMode ? "#1a1a1a" : "white";
   const textColor = darkMode ? "#fff" : "#1a1a1a";
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        minHeight: "100vh",
-        backgroundColor: bgColor,
-        color: textColor,
-      }}
-    >
-      {/* Sidebar */}
+    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: bgColor, color: textColor }}>
       <Sidebar darkMode={darkMode} />
-
-      {/* Main Content */}
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Navbar */}
-        <Navbar
-          darkMode={darkMode}
-          onToggleDarkMode={() => setDarkMode(!darkMode)}
-        />
-
-        {/* Content Area */}
-        <Box
-          component="main"
-          sx={{
-            flex: 1,
-            p: { xs: 1.5, sm: 2, md: 3 },
-            overflow: "auto",
-          }}
-        >
+        <Navbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} />
+        <Box component="main" sx={{ flex: 1, p: { xs: 1.5, sm: 2, md: 3 }, overflow: "auto" }}>
           <Container maxWidth="lg" disableGutters>
-            {/* Page Header */}
-            <Box sx={{ mb: 4 }}>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: 700,
-                  mb: 0.5,
-                  color: textColor,
-                }}
-              >
-                Welcome Back! 
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#999",
-                }}
-              >
-                Here's what's happening with your business today
-              </Typography>
+            <DashboardHeader />
+
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 4 }}>
+              {analyticsCards.map((card, idx) => (
+                <KpiCard key={idx} title={card.title} value={card.value as any} trend={card.trend} color={card.color} bgColor={card.bgColor} icon={card.icon} />
+              ))}
             </Box>
 
-            {/* Analytics Cards */}
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  sm: "repeat(2, minmax(0, 1fr))",
-                  md: "repeat(4, minmax(0, 1fr))",
-                },
-                gap: 2,
-                mb: 4,
-              }}
-            >
-              {analyticsCards.map((card, idx) => {
-                const Icon = card.icon;
-                return (
-                  <Card key={idx}
-                      sx={{
-                        background: cardBg,
-                        border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                        borderRadius: 2,
-                        p: 2,
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: `0 8px 16px ${
-                            darkMode
-                              ? "rgba(0,0,0,0.3)"
-                              : "rgba(0,0,0,0.1)"
-                          }`,
-                        },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          mb: 2,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: 1.5,
-                            background: card.bgColor,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Icon sx={{ color: card.color, fontSize: 28 }} />
-                        </Box>
-                        <Chip
-                          label={card.trend}
-                          size="small"
-                          sx={{
-                            background: card.bgColor,
-                            color: card.color,
-                            fontWeight: 600,
-                          }}
-                        />
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: "#999",
-                          mb: 0.5,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {card.title}
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        sx={{
-                          fontWeight: 700,
-                          color: textColor,
-                        }}
-                      >
-                        {card.value}
-                      </Typography>
-                    </Card>
-                );
-              })}
-            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" }, gap: 2, mb: 4 }}>
+              <ChartCard title="Reports Overview">
+                {loading ? <Skeleton variant="rectangular" height={300} /> : <LineAnalyticsChart data={chartData} />}
+              </ChartCard>
 
-            {/* Charts Section */}
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  md: "repeat(2, minmax(0, 1fr))",
-                },
-                gap: 2,
-                mb: 4,
-              }}
-            >
-              {/* Line Chart */}
-              <Card
-                  sx={{
-                    background: cardBg,
-                    border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                    borderRadius: 2,
-                    p: 2.5,
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 700,
-                      mb: 2,
-                      color: textColor,
-                    }}
-                  >
-                    Reports Trend 📈
-                  </Typography>
+              <Box sx={{ display: "grid", gap: 2 }}>
+                <ChartCard title="Report Categories">
                   {loading ? (
-                    <Box
-                      sx={{
-                        height: 300,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
+                    <Skeleton variant="rectangular" height={260} />
                   ) : (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={chartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke={darkMode ? "#333" : "#e0e0e0"}
-                        />
-                        <XAxis
-                          dataKey="name"
-                          stroke={darkMode ? "#666" : "#999"}
-                        />
-                        <YAxis stroke={darkMode ? "#666" : "#999"} />
-                        <Tooltip
-                          contentStyle={{
-                            background: darkMode ? "#1e1e1e" : "white",
-                            border: `1px solid ${
-                              darkMode ? "#333" : "#e0e0e0"
-                            }`,
-                            borderRadius: 8,
-                          }}
-                          labelStyle={{ color: textColor }}
-                        />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="reports"
-                          stroke="#5844FF"
-                          strokeWidth={3}
-                          dot={{ fill: "#5844FF", r: 5 }}
-                          activeDot={{ r: 7 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <PieAnalyticsChart data={[{ name: "Sales", value: 400 }, { name: "Operations", value: 300 }, { name: "Analytics", value: 300 }, { name: "Maintenance", value: 200 }]} />
                   )}
-                </Card>
+                </ChartCard>
 
-              {/* Bar Chart */}
-              <Card
-                  sx={{
-                    background: cardBg,
-                    border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                    borderRadius: 2,
-                    p: 2.5,
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 700,
-                      mb: 2,
-                      color: textColor,
-                    }}
-                  >
-                    Performance Metrics 📊
-                  </Typography>
-                  {loading ? (
-                    <Box
-                      sx={{
-                        height: 300,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={chartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke={darkMode ? "#333" : "#e0e0e0"}
-                        />
-                        <XAxis
-                          dataKey="name"
-                          stroke={darkMode ? "#666" : "#999"}
-                        />
-                        <YAxis stroke={darkMode ? "#666" : "#999"} />
-                        <Tooltip
-                          contentStyle={{
-                            background: darkMode ? "#1e1e1e" : "white",
-                            border: `1px solid ${
-                              darkMode ? "#333" : "#e0e0e0"
-                            }`,
-                            borderRadius: 8,
-                          }}
-                          labelStyle={{ color: textColor }}
-                        />
-                        <Legend />
-                        <Bar
-                          dataKey="users"
-                          fill="#5844FF"
-                          radius={[8, 8, 0, 0]}
-                        />
-                        <Bar
-                          dataKey="revenue"
-                          fill="#10B981"
-                          radius={[8, 8, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </Card>
+                <ChartCard title="AI Insights">
+                  {loading ? <Skeleton variant="rectangular" height={140} /> : <InsightsWidget items={insights} />}
+                </ChartCard>
+              </Box>
             </Box>
 
-            {/* Recent Activities Table */}
-            <Card
-              sx={{
-                background: cardBg,
-                border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                borderRadius: 2,
-                p: 2.5,
-              }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 700,
-                  mb: 2,
-                  color: textColor,
-                }}
-              >
-                Recent Activities 📋
-              </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" }, gap: 2 }}>
+              <ChartCard title="Performance Overview">
+                {loading ? <Skeleton variant="rectangular" height={300} /> : <BarAnalyticsChart data={chartData} />}
+              </ChartCard>
 
-              {loading ? (
-                <Box
-                  sx={{
-                    height: 300,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <CircularProgress />
-                </Box>
-              ) : (
-                <TableContainer
-                  component={Paper}
-                  sx={{
-                    background: darkMode ? "#151515" : "#fafafa",
-                    border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                  }}
-                >
-                  <Table
-                    sx={{
-                      "& thead th": {
-                        background: darkMode ? "#222" : "#f5f5f5",
-                        fontWeight: 700,
-                        color: textColor,
-                      },
-                      "& tbody td": {
-                        color: textColor,
-                        borderColor: darkMode ? "#333" : "#e0e0e0",
-                      },
-                    }}
-                  >
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>User</TableCell>
-                        <TableCell>Action</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Time</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {activities.map((activity) => (
-                        <TableRow key={activity.id}>
-                          <TableCell>{activity.user}</TableCell>
-                          <TableCell>{activity.action}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={activity.status}
-                              size="small"
-                              color={getStatusColor(activity.status)}
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell>{activity.timestamp}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Card>
+              <Box sx={{ display: "grid", gap: 2 }}>
+                <ChartCard title="Notifications">
+                  {loading ? <Skeleton variant="rectangular" height={140} /> : <NotificationWidget items={notifications} />}
+                </ChartCard>
+
+                <ChartCard title="Recent Activities">
+                  {loading ? <Skeleton variant="rectangular" height={240} /> : <ActivityWidget items={activities} />}
+                </ChartCard>
+              </Box>
+            </Box>
           </Container>
         </Box>
       </Box>
     </Box>
   );
-}
+};
 
 export default Dashboard;

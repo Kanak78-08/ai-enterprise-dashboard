@@ -1,93 +1,73 @@
 import apiClient from "./authService";
-import type { Activity, ChartData } from "../types";
+import type { Activity, ChartData, Notification, Insight, DashboardStat } from "../types";
 
 export const dashboardService = {
-  getAnalytics: async () => {
+  getDashboardStats: async (): Promise<DashboardStat> => {
     try {
-      // Mock analytics data
-      return {
-        totalUsers: 1234,
-        activeUsers: 856,
-        totalRevenue: "$125,430",
-        conversionRate: "3.24%",
-      };
+      const res = await apiClient.get("/dashboardStats");
+      return res.data;
     } catch (error) {
-      console.error("Error fetching analytics:", error);
-      throw error;
+      console.warn("Falling back to mock dashboard stats", error);
+      return {
+        totalReports: 18420,
+        completedReports: 17350,
+        pendingReports: 760,
+        failureRate: 4.1,
+      };
     }
   },
 
   getChartData: async (): Promise<ChartData[]> => {
     try {
-      // Mock chart data
-      return [
-        { name: "Mon", reports: 400, users: 240, revenue: 2400 },
-        { name: "Tue", reports: 300, users: 221, revenue: 2210 },
-        { name: "Wed", reports: 500, users: 229, revenue: 2290 },
-        { name: "Thu", reports: 200, users: 200, revenue: 2000 },
-        { name: "Fri", reports: 700, users: 320, revenue: 2181 },
-        { name: "Sat", reports: 550, users: 300, revenue: 2500 },
-        { name: "Sun", reports: 450, users: 278, revenue: 2100 },
-      ];
+      const res = await apiClient.get("/chartData");
+      return res.data;
     } catch (error) {
-      console.error("Error fetching chart data:", error);
-      throw error;
+      console.warn("Falling back to mock chart data", error);
+      return [
+        { name: "Mon", reports: 240, users: 120, revenue: 2400 },
+        { name: "Tue", reports: 300, users: 150, revenue: 3200 },
+        { name: "Wed", reports: 280, users: 140, revenue: 3000 },
+        { name: "Thu", reports: 350, users: 170, revenue: 3600 },
+        { name: "Fri", reports: 420, users: 210, revenue: 4200 },
+        { name: "Sat", reports: 500, users: 260, revenue: 5000 },
+        { name: "Sun", reports: 380, users: 190, revenue: 3800 },
+      ];
     }
   },
 
   getActivities: async (): Promise<Activity[]> => {
     try {
-      // Mock activities data
-      return [
-        {
-          id: 1,
-          user: "Kanak Sharma",
-          action: "Created Report",
-          status: "Completed",
-          timestamp: "2 hours ago",
-        },
-        {
-          id: 2,
-          user: "Aditya Patel",
-          action: "Updated Dashboard",
-          status: "Pending",
-          timestamp: "30 minutes ago",
-        },
-        {
-          id: 3,
-          user: "Abhishek Kumar",
-          action: "Deleted Analytics",
-          status: "Completed",
-          timestamp: "1 hour ago",
-        },
-        {
-          id: 4,
-          user: "Priya Singh",
-          action: "Generated Report",
-          status: "Completed",
-          timestamp: "45 minutes ago",
-        },
-        {
-          id: 5,
-          user: "Raj Verma",
-          action: "Updated Settings",
-          status: "Completed",
-          timestamp: "3 hours ago",
-        },
-      ];
+      const res = await apiClient.get("/activities?_sort=timestamp&_order=desc");
+      return res.data;
     } catch (error) {
-      console.error("Error fetching activities:", error);
-      throw error;
+      console.warn("Falling back to mock activities", error);
+      return [
+        { id: 1, user: "Kanak Sharma", action: "Created Report", status: "Completed", timestamp: "2 hours ago" },
+        { id: 2, user: "Aditya Patel", action: "Updated Dashboard", status: "Pending", timestamp: "30 minutes ago" },
+      ];
     }
   },
 
-  getUsers: async () => {
+  getNotifications: async (): Promise<Notification[]> => {
     try {
-      const response = await apiClient.get("/users");
-      return response.data;
+      const res = await apiClient.get("/notifications");
+      return res.data;
     } catch (error) {
-      console.error("Error fetching users:", error);
-      throw error;
+      console.warn("Falling back to mock notifications", error);
+      return [];
+    }
+  },
+
+  getInsights: async (): Promise<Insight[]> => {
+    try {
+      const res = await apiClient.get("/insights");
+      return res.data;
+    } catch (error) {
+      console.warn("Falling back to mock insights", error);
+      return [
+        { id: 1, title: "Failure rate improved", summary: "Failure rate improved by 12% after deployment.", trend: "improving" },
+        { id: 2, title: "Peak activity detected", summary: "Peak activity detected on Tuesday with 20% higher throughput.", trend: "spike" },
+      ];
     }
   },
 };
