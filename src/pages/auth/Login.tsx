@@ -26,7 +26,7 @@ import {
   LockOutlined,
   MailOutlined,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
 
 // Validation schema
 const validationSchema = yup.object().shape({

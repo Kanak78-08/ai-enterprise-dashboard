@@ -22,6 +22,7 @@ export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
+  error?: string;
 }
 
 // Dashboard types
@@ -55,4 +56,45 @@ export interface ChartData {
   users?: number;
   revenue?: number;
   analytics?: number;
+}
+
+// Widget state types
+export interface LoadingState {
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface WidgetState<T> extends LoadingState {
+  data: T;
+}
+
+// Common component props
+export interface BaseWidgetProps {
+  darkMode?: boolean;
+  loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
+}
+
+export interface KpiData {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+  bgColor: string;
+  trend: string;
+}
+
+export interface Notification {
+  id: number;
+  message: string;
+  type: "info" | "warning" | "success" | "error";
+  timestamp?: string;
+}
+
+export interface Insight {
+  id: number;
+  text: string;
+  metric?: string;
+  change?: string;
 }

@@ -1,24 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Container,
-  Card,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Paper,
-  CircularProgress,
+  Alert,
+  Button,
 } from "@mui/material";
 import {
   TrendingUp as TrendingUpIcon,
   People as UsersIcon,
   ShowChart as RevenueIcon,
   Assignment as ReportsIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import {
   LineChart,
@@ -34,8 +27,15 @@ import {
 } from "recharts";
 import Sidebar from "../../components/layout/Sidebar";
 import Navbar from "../../components/layout/Navbar";
+import { KpiCard } from "../../components/dashboard/KpiCard";
+import { ChartCard } from "../../components/dashboard/ChartCard";
+import { ActivityWidget } from "../../components/dashboard/ActivityWidget";
+import { NotificationWidget } from "../../components/dashboard/NotificationWidget";
+import { InsightsWidget } from "../../components/dashboard/InsightsWidget";
 import { dashboardService } from "../../services/dashboardService";
 import type { Activity, ChartData } from "../../types";
+import type { DashboardStats, Notification, Insight } from "../../services/dashboardService";
+
 
 interface DashboardProps {
   darkMode: boolean;
@@ -43,94 +43,165 @@ interface DashboardProps {
 }
 
 function Dashboard({ darkMode, setDarkMode }: DashboardProps) {
-  const [loading, setLoading] = useState(true);
+  // Loading states for each section
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [insightsLoading, setInsightsLoading] = useState(true);
+
+  // Error states for each section
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [chartError, setChartError] = useState<string | null>(null);
+  const [activitiesError, setActivitiesError] = useState<string | null>(null);
+  const [notificationsError, setNotificationsError] = useState<string | null>(null);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+
+  // Data states
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [analytics, setAnalytics] = useState<{
-    totalUsers: string | number;
-    activeUsers: string | number;
-    totalRevenue: string;
-    conversionRate: string;
-  }>({
-    totalUsers: "1,234",
-    activeUsers: "856",
-    totalRevenue: "$125,430",
-    conversionRate: "3.24%",
-  });
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [insights, setInsights] = useState<Insight[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [chartDataRes, activitiesRes, analyticsRes] = await Promise.all([
-          dashboardService.getChartData(),
-          dashboardService.getActivities(),
-          dashboardService.getAnalytics(),
-        ]);
-
-        setChartData(chartDataRes);
-        setActivities(activitiesRes);
-        setAnalytics(analyticsRes);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+  // Fetch individual sections
+  const fetchDashboardStats = useCallback(async () => {
+    setStatsLoading(true);
+    setStatsError(null);
+    try {
+      const data = await dashboardService.getDashboardStats();
+      setDashboardStats(data);
+    } catch (error) {
+      setStatsError("Failed to load dashboard statistics");
+      console.error("Error fetching stats:", error);
+    } finally {
+      setStatsLoading(false);
+    }
   }, []);
 
-  const analyticsCards = [
+  const fetchChartData = useCallback(async () => {
+    setChartLoading(true);
+    setChartError(null);
+    try {
+      const data = await dashboardService.getChartData();
+      setChartData(data);
+    } catch (error) {
+      setChartError("Failed to load chart data");
+      console.error("Error fetching chart:", error);
+    } finally {
+      setChartLoading(false);
+    }
+  }, []);
+
+  const fetchActivities = useCallback(async () => {
+    setActivitiesLoading(true);
+    setActivitiesError(null);
+    try {
+      const data = await dashboardService.getActivities();
+      setActivities(data);
+    } catch (error) {
+      setActivitiesError("Failed to load activities");
+      console.error("Error fetching activities:", error);
+    } finally {
+      setActivitiesLoading(false);
+    }
+  }, []);
+
+  const fetchNotifications = useCallback(async () => {
+    setNotificationsLoading(true);
+    setNotificationsError(null);
+    try {
+      const data = await dashboardService.getNotifications();
+      setNotifications(data);
+    } catch (error) {
+      setNotificationsError("Failed to load notifications");
+      console.error("Error fetching notifications:", error);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, []);
+
+  const fetchInsights = useCallback(async () => {
+    setInsightsLoading(true);
+    setInsightsError(null);
+    try {
+      const data = await dashboardService.getInsights();
+      setInsights(data);
+    } catch (error) {
+      setInsightsError("Failed to load insights");
+      console.error("Error fetching insights:", error);
+    } finally {
+      setInsightsLoading(false);
+    }
+  }, []);
+
+  // Fetch all data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([
+        fetchDashboardStats(),
+        fetchChartData(),
+        fetchActivities(),
+        fetchNotifications(),
+        fetchInsights(),
+      ]);
+    };
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Refresh all data
+  const refreshAllData = useCallback(() => {
+    fetchDashboardStats();
+    fetchChartData();
+    fetchActivities();
+    fetchNotifications();
+    fetchInsights();
+  }, [
+    fetchDashboardStats,
+    fetchChartData,
+    fetchActivities,
+    fetchNotifications,
+    fetchInsights,
+  ]);
+
+  // KPI cards configuration
+  const kpiCards = [
     {
       title: "Total Reports",
-      value: analytics.totalUsers,
-      icon: UsersIcon,
+      value: dashboardStats?.totalReports || "0",
+      icon: <UsersIcon sx={{ color: "#5844FF", fontSize: 24 }} />,
       color: "#5844FF",
       bgColor: "rgba(88, 68, 255, 0.1)",
       trend: "+12%",
     },
     {
       title: "Completed Reports",
-      value: analytics.activeUsers,
-      icon: TrendingUpIcon,
+      value: dashboardStats?.completedReports || "0",
+      icon: <TrendingUpIcon sx={{ color: "#10B981", fontSize: 24 }} />,
       color: "#10B981",
       bgColor: "rgba(16, 185, 129, 0.1)",
       trend: "+5%",
     },
     {
       title: "Pending Reports",
-      value: analytics.totalRevenue,
-      icon: RevenueIcon,
+      value: dashboardStats?.pendingReports || "0",
+      icon: <RevenueIcon sx={{ color: "#F59E0B", fontSize: 24 }} />,
       color: "#F59E0B",
       bgColor: "rgba(245, 158, 11, 0.1)",
       trend: "+18%",
     },
     {
-      title: "Failed Reports",
-      value: "92",
-      icon: ReportsIcon,
+      title: "Failure Rate",
+      value: dashboardStats?.failureRate || "0%",
+      icon: <ReportsIcon sx={{ color: "#EF4444", fontSize: 24 }} />,
       color: "#EF4444",
       bgColor: "rgba(239, 68, 68, 0.1)",
-      trend: "+8%",
+      trend: "-8%",
     },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return "success";
-      case "Pending":
-        return "warning";
-      case "Failed":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
   const bgColor = darkMode ? "#0a0a0a" : "#f5f7fc";
-  const cardBg = darkMode ? "#1a1a1a" : "white";
   const textColor = darkMode ? "#fff" : "#1a1a1a";
 
   return (
@@ -163,29 +234,62 @@ function Dashboard({ darkMode, setDarkMode }: DashboardProps) {
           }}
         >
           <Container maxWidth="lg" disableGutters>
-            {/* Page Header */}
-            <Box sx={{ mb: 4 }}>
-              <Typography
-                variant="h4"
+            {/* Page Header with Refresh */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 4,
+                flexWrap: "wrap",
+                gap: 2,
+              }}
+            >
+              <Box>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    mb: 0.5,
+                    color: textColor,
+                  }}
+                >
+                  Welcome Back!
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: darkMode ? "#9CA3AF" : "#6B7280",
+                  }}
+                >
+                  Here's what's happening with your business today
+                </Typography>
+              </Box>
+              <Button
+                startIcon={<RefreshIcon />}
+                onClick={refreshAllData}
                 sx={{
-                  fontWeight: 700,
-                  mb: 0.5,
-                  color: textColor,
+                  textTransform: "none",
+                  color: "#5844FF",
+                  borderColor: "#5844FF",
+                  "&:hover": {
+                    backgroundColor: "rgba(88, 68, 255, 0.1)",
+                  },
                 }}
+                variant="outlined"
               >
-                Welcome Back! 
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#999",
-                }}
-              >
-                Here's what's happening with your business today
-              </Typography>
+                Refresh
+              </Button>
             </Box>
 
-            {/* Analytics Cards */}
+            {/* Error Alert if any global errors */}
+            {statsError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {statsError}
+              </Alert>
+            )}
+
+            {/* KPI Cards */}
             <Box
               sx={{
                 display: "grid",
@@ -198,79 +302,19 @@ function Dashboard({ darkMode, setDarkMode }: DashboardProps) {
                 mb: 4,
               }}
             >
-              {analyticsCards.map((card, idx) => {
-                const Icon = card.icon;
-                return (
-                  <Card key={idx}
-                      sx={{
-                        background: cardBg,
-                        border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                        borderRadius: 2,
-                        p: 2,
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: `0 8px 16px ${
-                            darkMode
-                              ? "rgba(0,0,0,0.3)"
-                              : "rgba(0,0,0,0.1)"
-                          }`,
-                        },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          mb: 2,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: 1.5,
-                            background: card.bgColor,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Icon sx={{ color: card.color, fontSize: 28 }} />
-                        </Box>
-                        <Chip
-                          label={card.trend}
-                          size="small"
-                          sx={{
-                            background: card.bgColor,
-                            color: card.color,
-                            fontWeight: 600,
-                          }}
-                        />
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: "#999",
-                          mb: 0.5,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {card.title}
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        sx={{
-                          fontWeight: 700,
-                          color: textColor,
-                        }}
-                      >
-                        {card.value}
-                      </Typography>
-                    </Card>
-                );
-              })}
+              {kpiCards.map((card, idx) => (
+                <KpiCard
+                  key={idx}
+                  title={card.title}
+                  value={card.value}
+                  icon={card.icon}
+                  color={card.color}
+                  bgColor={card.bgColor}
+                  trend={card.trend}
+                  loading={statsLoading}
+                  darkMode={darkMode}
+                />
+              ))}
             </Box>
 
             {/* Charts Section */}
@@ -286,221 +330,129 @@ function Dashboard({ darkMode, setDarkMode }: DashboardProps) {
               }}
             >
               {/* Line Chart */}
-              <Card
-                  sx={{
-                    background: cardBg,
-                    border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                    borderRadius: 2,
-                    p: 2.5,
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 700,
-                      mb: 2,
-                      color: textColor,
-                    }}
-                  >
-                    Reports Trend 📈
-                  </Typography>
-                  {loading ? (
-                    <Box
-                      sx={{
-                        height: 300,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={chartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke={darkMode ? "#333" : "#e0e0e0"}
-                        />
-                        <XAxis
-                          dataKey="name"
-                          stroke={darkMode ? "#666" : "#999"}
-                        />
-                        <YAxis stroke={darkMode ? "#666" : "#999"} />
-                        <Tooltip
-                          contentStyle={{
-                            background: darkMode ? "#1e1e1e" : "white",
-                            border: `1px solid ${
-                              darkMode ? "#333" : "#e0e0e0"
-                            }`,
-                            borderRadius: 8,
-                          }}
-                          labelStyle={{ color: textColor }}
-                        />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="reports"
-                          stroke="#5844FF"
-                          strokeWidth={3}
-                          dot={{ fill: "#5844FF", r: 5 }}
-                          activeDot={{ r: 7 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  )}
-                </Card>
+              <ChartCard
+                title="Reports Trend 📈"
+                loading={chartLoading}
+                error={chartError || undefined}
+                onRetry={fetchChartData}
+                darkMode={darkMode}
+                height="350px"
+              >
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={chartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={darkMode ? "#333" : "#e0e0e0"}
+                      />
+                      <XAxis
+                        dataKey="name"
+                        stroke={darkMode ? "#666" : "#999"}
+                      />
+                      <YAxis stroke={darkMode ? "#666" : "#999"} />
+                      <Tooltip
+                        contentStyle={{
+                          background: darkMode ? "#1e1e1e" : "white",
+                          border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
+                          borderRadius: 8,
+                        }}
+                        labelStyle={{ color: textColor }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="reports"
+                        stroke="#5844FF"
+                        strokeWidth={2}
+                        dot={{ fill: "#5844FF", r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartCard>
 
               {/* Bar Chart */}
-              <Card
-                  sx={{
-                    background: cardBg,
-                    border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                    borderRadius: 2,
-                    p: 2.5,
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 700,
-                      mb: 2,
-                      color: textColor,
-                    }}
-                  >
-                    Performance Metrics 📊
-                  </Typography>
-                  {loading ? (
-                    <Box
-                      sx={{
-                        height: 300,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={chartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke={darkMode ? "#333" : "#e0e0e0"}
-                        />
-                        <XAxis
-                          dataKey="name"
-                          stroke={darkMode ? "#666" : "#999"}
-                        />
-                        <YAxis stroke={darkMode ? "#666" : "#999"} />
-                        <Tooltip
-                          contentStyle={{
-                            background: darkMode ? "#1e1e1e" : "white",
-                            border: `1px solid ${
-                              darkMode ? "#333" : "#e0e0e0"
-                            }`,
-                            borderRadius: 8,
-                          }}
-                          labelStyle={{ color: textColor }}
-                        />
-                        <Legend />
-                        <Bar
-                          dataKey="users"
-                          fill="#5844FF"
-                          radius={[8, 8, 0, 0]}
-                        />
-                        <Bar
-                          dataKey="revenue"
-                          fill="#10B981"
-                          radius={[8, 8, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </Card>
+              <ChartCard
+                title="Performance Metrics 📊"
+                loading={chartLoading}
+                error={chartError || undefined}
+                onRetry={fetchChartData}
+                darkMode={darkMode}
+                height="350px"
+              >
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={darkMode ? "#333" : "#e0e0e0"}
+                      />
+                      <XAxis
+                        dataKey="name"
+                        stroke={darkMode ? "#666" : "#999"}
+                      />
+                      <YAxis stroke={darkMode ? "#666" : "#999"} />
+                      <Tooltip
+                        contentStyle={{
+                          background: darkMode ? "#1e1e1e" : "white",
+                          border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
+                          borderRadius: 8,
+                        }}
+                        labelStyle={{ color: textColor }}
+                      />
+                      <Legend />
+                      <Bar
+                        dataKey="users"
+                        fill="#5844FF"
+                        radius={[8, 8, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="revenue"
+                        fill="#10B981"
+                        radius={[8, 8, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
             </Box>
 
-            {/* Recent Activities Table */}
-            <Card
+            {/* Bottom Widgets Section */}
+            <Box
               sx={{
-                background: cardBg,
-                border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                borderRadius: 2,
-                p: 2.5,
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "2fr 1fr",
+                },
+                gap: 2,
+                mb: 4,
               }}
             >
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 700,
-                  mb: 2,
-                  color: textColor,
-                }}
-              >
-                Recent Activities 📋
-              </Typography>
+              {/* Recent Activities */}
+              <ActivityWidget
+                activities={activities}
+                loading={activitiesLoading}
+                error={activitiesError || undefined}
+                onRetry={fetchActivities}
+                darkMode={darkMode}
+              />
 
-              {loading ? (
-                <Box
-                  sx={{
-                    height: 300,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <CircularProgress />
-                </Box>
-              ) : (
-                <TableContainer
-                  component={Paper}
-                  sx={{
-                    background: darkMode ? "#151515" : "#fafafa",
-                    border: `1px solid ${darkMode ? "#333" : "#e0e0e0"}`,
-                  }}
-                >
-                  <Table
-                    sx={{
-                      "& thead th": {
-                        background: darkMode ? "#222" : "#f5f5f5",
-                        fontWeight: 700,
-                        color: textColor,
-                      },
-                      "& tbody td": {
-                        color: textColor,
-                        borderColor: darkMode ? "#333" : "#e0e0e0",
-                      },
-                    }}
-                  >
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>User</TableCell>
-                        <TableCell>Action</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Time</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {activities.map((activity) => (
-                        <TableRow key={activity.id}>
-                          <TableCell>{activity.user}</TableCell>
-                          <TableCell>{activity.action}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={activity.status}
-                              size="small"
-                              color={getStatusColor(activity.status)}
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell>{activity.timestamp}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Card>
+              {/* Notifications */}
+              <NotificationWidget
+                notifications={notifications}
+                loading={notificationsLoading}
+                error={notificationsError || undefined}
+                onRetry={fetchNotifications}
+                darkMode={darkMode}
+              />
+            </Box>
+
+            {/* Insights Section */}
+            <InsightsWidget
+              insights={insights}
+              loading={insightsLoading}
+              error={insightsError || undefined}
+              onRetry={fetchInsights}
+              darkMode={darkMode}
+            />
           </Container>
         </Box>
       </Box>

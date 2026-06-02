@@ -54,11 +54,12 @@ export const authService = {
           }
 
           throw new Error(
-            "Unable to reach the mock API. Start the server with `npm run server`, or use the demo credentials."
+            "Unable to reach the mock API. Start the server with `npm run server`, or use the demo credentials.",
+            { cause: error }
           );
         }
       }
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error), { cause: error });
     }
   },
 

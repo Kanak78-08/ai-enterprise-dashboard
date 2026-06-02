@@ -24,7 +24,7 @@ import {
   Close as CloseIcon,
   Logout as LogoutIcon,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
 
 interface SidebarProps {
   darkMode: boolean;
