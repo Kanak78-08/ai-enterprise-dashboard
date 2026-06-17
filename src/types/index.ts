@@ -1,8 +1,35 @@
-// Auth types
 export interface User {
-  email: string;
   id?: string;
+  email: string;
+  password?: string;
   name?: string;
+  role?: string;
+  status?: string;
+  lastLogin?: string;
+}
+
+export interface Report {
+  id: string;
+  name: string;
+  category: string;
+  status: string;
+  priority: string;
+  createdBy: string;
+  createdDate: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface AnalyticsData {
+  id: string;
+  metric: string;
+  value: string;
+  plant: string;
+  pressure: string;
+  efficiency: string;
+  timestamp: string;
+  category?: string;
 }
 
 export interface LoginCredentials {

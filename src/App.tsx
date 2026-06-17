@@ -5,6 +5,10 @@ import Dashboard from "./pages/dashboard/dashboard";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
+import Layout from "./components/layout/Layout";
+import ReportsPage from "./pages/reports/ReportsPage";
+import UsersPage from "./pages/users/UsersPage";
+import AnalyticsPage from "./pages/analytics/AnalyticsPage";
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -16,62 +20,71 @@ function App() {
           {/* Login Route */}
           <Route path="/" element={<Login />} />
 
-          {/* Dashboard Route - Protected */}
+          {/* Protected Routes inside Layout */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                <Layout darkMode={darkMode} setDarkMode={setDarkMode}>
+                  <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                </Layout>
               </ProtectedRoute>
             }
           />
 
-          {/* Reports Route - Placeholder */}
           <Route
             path="/reports"
             element={
               <ProtectedRoute>
-                <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                <Layout darkMode={darkMode} setDarkMode={setDarkMode}>
+                  <ReportsPage />
+                </Layout>
               </ProtectedRoute>
             }
           />
 
-          {/* Analytics Route - Placeholder */}
           <Route
             path="/analytics"
             element={
               <ProtectedRoute>
-                <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                <Layout darkMode={darkMode} setDarkMode={setDarkMode}>
+                  <AnalyticsPage />
+                </Layout>
               </ProtectedRoute>
             }
           />
 
-          {/* AI Assistant Route - Placeholder */}
           <Route
             path="/ai-assistant"
             element={
               <ProtectedRoute>
-                <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                <Layout darkMode={darkMode} setDarkMode={setDarkMode}>
+                  {/* Placeholder for AI Assistant */}
+                  <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                </Layout>
               </ProtectedRoute>
             }
           />
 
-          {/* Users Route - Placeholder */}
           <Route
             path="/users"
             element={
               <ProtectedRoute>
-                <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                <Layout darkMode={darkMode} setDarkMode={setDarkMode}>
+                  <UsersPage />
+                </Layout>
               </ProtectedRoute>
             }
           />
 
-          {/* Settings Route - Placeholder */}
           <Route
             path="/settings"
             element={
               <ProtectedRoute>
-                <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                <Layout darkMode={darkMode} setDarkMode={setDarkMode}>
+                  {/* Placeholder for Settings */}
+                  <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                </Layout>
               </ProtectedRoute>
             }
           />

@@ -5,40 +5,289 @@
       "email": "admin@test.com",
       "password": "password123",
       "name": "Admin User",
-      "role": "admin"
+      "role": "Admin",
+      "status": "Active",
+      "lastLogin": "2024-06-15T10:00:00Z"
     },
     {
       "id": "2",
-      "email": "user@test.com",
+      "email": "john@test.com",
       "password": "password123",
-      "name": "Test User",
-      "role": "user"
+      "name": "John Doe",
+      "role": "Analyst",
+      "status": "Active",
+      "lastLogin": "2024-06-15T08:30:00Z"
+    },
+    {
+      "id": "3",
+      "email": "jane@test.com",
+      "password": "password123",
+      "name": "Jane Smith",
+      "role": "Viewer",
+      "status": "Active",
+      "lastLogin": "2024-06-14T14:15:00Z"
+    },
+    {
+      "id": "4",
+      "email": "mike@test.com",
+      "password": "password123",
+      "name": "Mike Johnson",
+      "role": "Analyst",
+      "status": "Active",
+      "lastLogin": "2024-06-15T09:45:00Z"
+    },
+    {
+      "id": "5",
+      "email": "sarah@test.com",
+      "password": "password123",
+      "name": "Sarah Williams",
+      "role": "Admin",
+      "status": "Active",
+      "lastLogin": "2024-06-15T11:20:00Z"
+    },
+    {
+      "id": "6",
+      "email": "david@test.com",
+      "password": "password123",
+      "name": "David Brown",
+      "role": "Viewer",
+      "status": "Inactive",
+      "lastLogin": "2024-06-10T16:00:00Z"
+    },
+    {
+      "id": "7",
+      "email": "emily@test.com",
+      "password": "password123",
+      "name": "Emily Davis",
+      "role": "Analyst",
+      "status": "Active",
+      "lastLogin": "2024-06-15T07:30:00Z"
+    },
+    {
+      "id": "8",
+      "email": "robert@test.com",
+      "password": "password123",
+      "name": "Robert Miller",
+      "role": "Viewer",
+      "status": "Active",
+      "lastLogin": "2024-06-15T13:15:00Z"
+    }
+  ],
+  "reports": [
+    {
+      "id": "REP-1001",
+      "name": "Daily Analytics",
+      "category": "Operations",
+      "status": "Completed",
+      "priority": "High",
+      "createdBy": "Admin User",
+      "createdDate": "2024-06-15",
+      "description": "Daily system operations report with performance metrics",
+      "startDate": "2024-06-15",
+      "endDate": "2024-06-15"
+    },
+    {
+      "id": "REP-1002",
+      "name": "Weekly Sales Report",
+      "category": "Sales",
+      "status": "Pending",
+      "priority": "Medium",
+      "createdBy": "John Doe",
+      "createdDate": "2024-06-13",
+      "description": "Weekly sales figures and trends",
+      "startDate": "2024-06-08",
+      "endDate": "2024-06-14"
+    },
+    {
+      "id": "REP-1003",
+      "name": "System Maintenance Log",
+      "category": "Maintenance",
+      "status": "Failed",
+      "priority": "High",
+      "createdBy": "Admin User",
+      "createdDate": "2024-06-14",
+      "description": "System downtime analysis and maintenance report",
+      "startDate": "2024-06-14",
+      "endDate": "2024-06-14"
+    },
+    {
+      "id": "REP-1004",
+      "name": "Q2 Financial Summary",
+      "category": "Operations",
+      "status": "Completed",
+      "priority": "High",
+      "createdBy": "Sarah Williams",
+      "createdDate": "2024-06-12",
+      "description": "Quarterly financial performance overview",
+      "startDate": "2024-04-01",
+      "endDate": "2024-06-30"
+    },
+    {
+      "id": "REP-1005",
+      "name": "Customer Engagement Metrics",
+      "category": "Analytics",
+      "status": "Completed",
+      "priority": "Medium",
+      "createdBy": "Emily Davis",
+      "createdDate": "2024-06-11",
+      "description": "Customer engagement and retention metrics",
+      "startDate": "2024-06-01",
+      "endDate": "2024-06-15"
+    },
+    {
+      "id": "REP-1006",
+      "name": "Data Quality Assessment",
+      "category": "Maintenance",
+      "status": "Pending",
+      "priority": "Low",
+      "createdBy": "John Doe",
+      "createdDate": "2024-06-14",
+      "description": "Assessment of data quality and integrity",
+      "startDate": "2024-06-01",
+      "endDate": "2024-06-15"
+    },
+    {
+      "id": "REP-1007",
+      "name": "Monthly Performance Review",
+      "category": "Operations",
+      "status": "Completed",
+      "priority": "High",
+      "createdBy": "Admin User",
+      "createdDate": "2024-06-10",
+      "description": "May performance metrics and KPI review",
+      "startDate": "2024-05-01",
+      "endDate": "2024-05-31"
+    },
+    {
+      "id": "REP-1008",
+      "name": "Market Analysis Report",
+      "category": "Sales",
+      "status": "Completed",
+      "priority": "Medium",
+      "createdBy": "Mike Johnson",
+      "createdDate": "2024-06-09",
+      "description": "Competitive market analysis and trends",
+      "startDate": "2024-05-15",
+      "endDate": "2024-06-14"
     }
   ],
   "analytics": [
     {
-      "id": 1,
-      "date": "2024-01-01",
-      "totalUsers": 1234,
-      "activeUsers": 856,
-      "totalRevenue": 125430,
-      "conversionRate": 3.24
+      "id": "1",
+      "metric": "Temperature",
+      "value": "38°C",
+      "plant": "Gurgaon",
+      "pressure": "120 PSI",
+      "efficiency": "92%",
+      "timestamp": "2024-06-15T10:30:00Z",
+      "category": "Operations"
+    },
+    {
+      "id": "2",
+      "metric": "Temperature",
+      "value": "35°C",
+      "plant": "Pune",
+      "pressure": "115 PSI",
+      "efficiency": "95%",
+      "timestamp": "2024-06-15T10:45:00Z",
+      "category": "Operations"
+    },
+    {
+      "id": "3",
+      "metric": "Humidity",
+      "value": "45%",
+      "plant": "Gurgaon",
+      "pressure": "118 PSI",
+      "efficiency": "90%",
+      "timestamp": "2024-06-15T11:00:00Z",
+      "category": "Maintenance"
+    },
+    {
+      "id": "4",
+      "metric": "Pressure",
+      "value": "125 PSI",
+      "plant": "Chennai",
+      "pressure": "125 PSI",
+      "efficiency": "88%",
+      "timestamp": "2024-06-15T11:15:00Z",
+      "category": "Operations"
+    },
+    {
+      "id": "5",
+      "metric": "Temperature",
+      "value": "42°C",
+      "plant": "Mumbai",
+      "pressure": "130 PSI",
+      "efficiency": "85%",
+      "timestamp": "2024-06-15T11:30:00Z",
+      "category": "Operations"
+    },
+    {
+      "id": "6",
+      "metric": "Efficiency",
+      "value": "91%",
+      "plant": "Bangalore",
+      "pressure": "122 PSI",
+      "efficiency": "91%",
+      "timestamp": "2024-06-15T11:45:00Z",
+      "category": "Analytics"
+    },
+    {
+      "id": "7",
+      "metric": "Temperature",
+      "value": "36°C",
+      "plant": "Hyderabad",
+      "pressure": "117 PSI",
+      "efficiency": "93%",
+      "timestamp": "2024-06-15T12:00:00Z",
+      "category": "Operations"
+    },
+    {
+      "id": "8",
+      "metric": "Pressure",
+      "value": "128 PSI",
+      "plant": "Gurgaon",
+      "pressure": "128 PSI",
+      "efficiency": "89%",
+      "timestamp": "2024-06-15T12:15:00Z",
+      "category": "Operations"
     }
   ],
   "activities": [
     {
       "id": 1,
-      "user": "Kanak Sharma",
+      "user": "Admin User",
       "action": "Created Report",
       "status": "Completed",
-      "timestamp": "2024-01-15T10:30:00Z"
+      "timestamp": "2024-06-15T10:30:00Z"
     },
     {
       "id": 2,
-      "user": "Aditya Patel",
+      "user": "John Doe",
       "action": "Updated Dashboard",
+      "status": "Completed",
+      "timestamp": "2024-06-15T11:00:00Z"
+    },
+    {
+      "id": 3,
+      "user": "Sarah Williams",
+      "action": "Exported Analytics Data",
+      "status": "Completed",
+      "timestamp": "2024-06-15T09:15:00Z"
+    },
+    {
+      "id": 4,
+      "user": "Emily Davis",
+      "action": "Generated Report",
       "status": "Pending",
-      "timestamp": "2024-01-15T11:00:00Z"
+      "timestamp": "2024-06-15T11:45:00Z"
+    },
+    {
+      "id": 5,
+      "user": "Mike Johnson",
+      "action": "Modified Filters",
+      "status": "Completed",
+      "timestamp": "2024-06-15T08:30:00Z"
     }
   ]
 }
