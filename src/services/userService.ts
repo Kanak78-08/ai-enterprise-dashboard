@@ -1,4 +1,4 @@
-import apiClient from "./apiClient";
+import apiClient from "../api/axiosClient";
 import type { User } from "../types";
 
 export const userService = {

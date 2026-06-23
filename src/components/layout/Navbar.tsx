@@ -20,7 +20,9 @@ import {
   Settings as SettingsIcon,
 } from "@mui/icons-material";
 import { useState } from "react";
-import { useAuth } from "../../contexts/useAuth";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { logout } from "../../redux/auth/authSlice";
+import { useNavigate } from "react-router-dom";
 
 interface NavbarProps {
   darkMode: boolean;
@@ -28,7 +30,9 @@ interface NavbarProps {
 }
 
 function Navbar({ darkMode, onToggleDarkMode }: NavbarProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [anchorElProfile, setAnchorElProfile] = useState<null | HTMLElement>(
@@ -53,8 +57,11 @@ function Navbar({ darkMode, onToggleDarkMode }: NavbarProps) {
   };
 
   const handleLogout = () => {
-    logout();
+    dispatch(logout());
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     handleProfileMenuClose();
+    navigate("/");
   };
 
   const userName = user?.name || "User";
@@ -266,6 +273,10 @@ function Navbar({ darkMode, onToggleDarkMode }: NavbarProps) {
             </MenuItem>
             <Divider />
             <MenuItem
+              onClick={() => {
+                handleProfileMenuClose();
+                navigate("/profile");
+              }}
               sx={{
                 "&:hover": {
                   background: darkMode
@@ -277,6 +288,10 @@ function Navbar({ darkMode, onToggleDarkMode }: NavbarProps) {
               <AccountIcon sx={{ mr: 1.5 }} /> My Profile
             </MenuItem>
             <MenuItem
+              onClick={() => {
+                handleProfileMenuClose();
+                navigate("/settings");
+              }}
               sx={{
                 "&:hover": {
                   background: darkMode

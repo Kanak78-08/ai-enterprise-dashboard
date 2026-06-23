@@ -1,4 +1,4 @@
-import apiClient from "./apiClient";
+import apiClient from "../api/axiosClient";
 import type { AnalyticsData } from "../types";
 
 export const analyticsService = {

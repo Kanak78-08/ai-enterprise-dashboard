@@ -24,31 +24,35 @@ import {
   Close as CloseIcon,
   Logout as LogoutIcon,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/useAuth";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { logout } from "../../redux/auth/authSlice";
 
 interface SidebarProps {
   darkMode: boolean;
 }
 
 const menuItems = [
-  { label: "Dashboard", icon: DashboardIcon, path: "/dashboard" },
-  { label: "Reports", icon: ReportsIcon, path: "/reports" },
-  { label: "Analytics", icon: AnalyticsIcon, path: "/analytics" },
-  { label: "AI Assistant", icon: AIIcon, path: "/ai-assistant" },
-  { label: "Users", icon: UsersIcon, path: "/users" },
-  { label: "Settings", icon: SettingsIcon, path: "/settings" },
+  { label: "Dashboard", icon: DashboardIcon, path: "/dashboard", roles: ["Admin", "Analyst", "Viewer"] },
+  { label: "Reports", icon: ReportsIcon, path: "/reports", roles: ["Admin", "Analyst"] },
+  { label: "Analytics", icon: AnalyticsIcon, path: "/analytics", roles: ["Admin", "Analyst", "Viewer"] },
+  { label: "AI Assistant", icon: AIIcon, path: "/ai-assistant", roles: ["Admin", "Analyst"] },
+  { label: "Users", icon: UsersIcon, path: "/users", roles: ["Admin"] },
+  { label: "Settings", icon: SettingsIcon, path: "/settings", roles: ["Admin"] },
 ];
 
 function Sidebar({ darkMode }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { role } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
-    logout();
+    dispatch(logout());
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/");
   };
 
@@ -130,7 +134,7 @@ function Sidebar({ darkMode }: SidebarProps) {
           px: 1,
         }}
       >
-        {menuItems.map((item) => {
+        {menuItems.filter(item => item.roles.includes(role || "Viewer")).map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
 

@@ -1,4 +1,4 @@
-import apiClient from "./apiClient";
+import apiClient from "../api/axiosClient";
 import type { Report } from "../types";
 
 export const reportService = {

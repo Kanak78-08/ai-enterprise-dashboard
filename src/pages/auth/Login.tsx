@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppDispatch } from "../../redux/hooks";
+import { loginSuccess } from "../../redux/auth/authSlice";
+import { authApi } from "../../api/authApi";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -26,7 +29,7 @@ import {
   LockOutlined,
   MailOutlined,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/useAuth";
+
 
 // Validation schema
 const validationSchema = yup.object().shape({
@@ -47,7 +50,8 @@ interface LoginFormData {
 
 function Login() {
   const navigate = useNavigate();
-  const { login, isLoading } = useAuth();
+  const dispatch = useAppDispatch();
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
@@ -66,13 +70,17 @@ function Login() {
 
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
+    setIsLoading(true);
     try {
-      await login(data);
+      const response = await authApi.login(data);
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
+      dispatch(loginSuccess(response));
       navigate("/dashboard");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Invalid email or password"
-      );
+      setError(err instanceof Error ? err.message : "Invalid email or password");
+    } finally {
+      setIsLoading(false);
     }
   };
 
