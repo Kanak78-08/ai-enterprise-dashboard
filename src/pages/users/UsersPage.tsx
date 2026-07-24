@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Box, Button, Typography, IconButton, Stack, TextField, Avatar } from "@mui/material";
+import { Box, Button, Typography, IconButton, Stack, TextField, Avatar, Snackbar, Alert as MuiAlert } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { useForm, Controller } from "react-hook-form";
 import * as yup from "yup";
@@ -24,7 +24,6 @@ const schema = yup.object({
 
 type UserFormData = yup.InferType<typeof schema>;
 
-// Helper for avatar initials
 function getInitials(name: string) {
   if (!name) return "";
   const parts = name.split(" ");
@@ -47,10 +46,18 @@ export default function UsersPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  const [toast, setToast] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({ open: false, message: "", severity: "success" });
+
   const { control, handleSubmit, reset, formState: { errors } } = useForm<UserFormData>({
     resolver: yupResolver(schema),
     defaultValues: { name: "", email: "", role: "Viewer", password: "", status: "Active" }
   });
+
+  const showToast = (message: string, severity: "success" | "error") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const handleCloseToast = () => setToast((prev) => ({ ...prev, open: false }));
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -58,7 +65,7 @@ export default function UsersPage() {
       const data = await userService.getUsers();
       setUsers(data);
     } catch (error) {
-      console.error("Failed to fetch users", error);
+      showToast("Failed to fetch users", "error");
     } finally {
       setLoading(false);
     }
@@ -93,18 +100,20 @@ export default function UsersPage() {
     try {
       if (selectedUser && selectedUser.id) {
         await userService.updateUser(selectedUser.id, data);
+        showToast("User updated successfully", "success");
       } else {
         const newUser = {
           ...data,
-          id: generateUserId(),
+          userId: generateUserId(),
           lastLogin: "Never",
         };
         await userService.createUser(newUser);
+        showToast("User created successfully", "success");
       }
       handleCloseModal();
       fetchUsers();
     } catch (error) {
-      console.error("Failed to save user", error);
+      showToast("Failed to save user", "error");
     }
   };
 
@@ -112,10 +121,11 @@ export default function UsersPage() {
     if (selectedUser && selectedUser.id) {
       try {
         await userService.deleteUser(selectedUser.id);
+        showToast("User deleted successfully", "success");
         setDeleteModalOpen(false);
         fetchUsers();
       } catch (error) {
-        console.error("Failed to delete user", error);
+        showToast("Failed to delete user", "error");
       }
     }
   };
@@ -202,6 +212,12 @@ export default function UsersPage() {
       >
         <Typography>Are you sure you want to delete this user?</Typography>
       </AppModal>
+
+      <Snackbar open={toast.open} autoHideDuration={6000} onClose={handleCloseToast} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
+        <MuiAlert onClose={handleCloseToast} severity={toast.severity} sx={{ width: "100%" }}>
+          {toast.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 }

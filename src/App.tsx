@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 import Dashboard from "./pages/dashboard/dashboard";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -11,13 +13,20 @@ import UsersPage from "./pages/users/UsersPage";
 import AnalyticsPage from "./pages/analytics/AnalyticsPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import SettingsPage from "./pages/settings/SettingsPage";
+import AiAssistantPage from "./pages/ai-assistant/AiAssistantPage";
 import { useAppDispatch } from "./redux/hooks";
 import { restoreSession } from "./redux/auth/authSlice";
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem("theme");
+    return saved === "dark";
+  });
   const dispatch = useAppDispatch();
 
+  useEffect(() => {
+    localStorage.setItem("theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
@@ -34,8 +43,10 @@ function App() {
   return (
       <BrowserRouter>
         <Routes>
-          {/* Login Route */}
+          {/* Auth Routes */}
           <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Protected Routes inside Layout */}
           <Route
@@ -76,8 +87,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout darkMode={darkMode} setDarkMode={setDarkMode}>
-                  {/* Placeholder for AI Assistant */}
-                  <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                  <AiAssistantPage />
                 </Layout>
               </ProtectedRoute>
             }
@@ -102,7 +112,7 @@ function App() {
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["Admin"]}>
                   <Layout darkMode={darkMode} setDarkMode={setDarkMode}>
-                    <SettingsPage />
+                    <SettingsPage darkMode={darkMode} setDarkMode={setDarkMode} />
                   </Layout>
                 </RoleGuard>
               </ProtectedRoute>

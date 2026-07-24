@@ -1,8 +1,5 @@
+import axiosClient from "../api/axiosClient";
 import type { Activity, ChartData } from "../types";
-
-// Simulated API delay for realistic loading states
-const simulateDelay = (ms: number = 800) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface DashboardStats {
   totalReports: number;
@@ -26,18 +23,21 @@ export interface Insight {
 }
 
 export const dashboardService = {
-  /**
-   * Fetch dashboard statistics (KPI data)
-   */
   getDashboardStats: async (): Promise<DashboardStats> => {
     try {
-      await simulateDelay();
-      // Mock dashboard stats from db.json
+      const response = await axiosClient.get('/reports');
+      const reports = response.data || [];
+      const totalReports = reports.length;
+      const completedReports = reports.filter((r: any) => r.status === 'Completed').length;
+      const pendingReports = reports.filter((r: any) => r.status === 'Pending').length;
+      const failedReports = reports.filter((r: any) => r.status === 'Failed').length;
+      const failureRate = totalReports ? ((failedReports / totalReports) * 100).toFixed(1) + '%' : '0%';
+
       return {
-        totalReports: 1248,
-        completedReports: 1100,
-        pendingReports: 98,
-        failureRate: "4.3%",
+        totalReports,
+        completedReports,
+        pendingReports,
+        failureRate,
       };
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -45,21 +45,18 @@ export const dashboardService = {
     }
   },
 
-  /**
-   * Fetch chart data for analytics
-   */
   getChartData: async (): Promise<ChartData[]> => {
     try {
-      await simulateDelay();
-      // Mock chart data
+      // Return static chart data since db doesn't have time series for this specifically,
+      // but we could also group reports by date if we wanted to.
       return [
-        { name: "Mon", reports: 400, users: 240, revenue: 2400 },
-        { name: "Tue", reports: 300, users: 221, revenue: 2210 },
-        { name: "Wed", reports: 500, users: 229, revenue: 2290 },
-        { name: "Thu", reports: 200, users: 200, revenue: 2000 },
-        { name: "Fri", reports: 700, users: 320, revenue: 2181 },
-        { name: "Sat", reports: 550, users: 300, revenue: 2500 },
-        { name: "Sun", reports: 450, users: 278, revenue: 2100 },
+        { name: "Mon", reports: 40, users: 24, revenue: 240 },
+        { name: "Tue", reports: 30, users: 22, revenue: 221 },
+        { name: "Wed", reports: 50, users: 29, revenue: 229 },
+        { name: "Thu", reports: 20, users: 20, revenue: 200 },
+        { name: "Fri", reports: 70, users: 32, revenue: 281 },
+        { name: "Sat", reports: 55, users: 30, revenue: 250 },
+        { name: "Sun", reports: 45, users: 28, revenue: 210 },
       ];
     } catch (error) {
       console.error("Error fetching chart data:", error);
@@ -67,50 +64,10 @@ export const dashboardService = {
     }
   },
 
-  /**
-   * Fetch recent activities
-   */
   getActivities: async (): Promise<Activity[]> => {
     try {
-      await simulateDelay(600);
-      // Mock activities data from db.json
-      return [
-        {
-          id: 1,
-          user: "Kanak Sharma",
-          action: "Created Report",
-          status: "Completed",
-          timestamp: "2 hours ago",
-        },
-        {
-          id: 2,
-          user: "Aditya Patel",
-          action: "Updated Dashboard",
-          status: "Pending",
-          timestamp: "30 minutes ago",
-        },
-        {
-          id: 3,
-          user: "Abhishek Kumar",
-          action: "Deleted Analytics",
-          status: "Completed",
-          timestamp: "1 hour ago",
-        },
-        {
-          id: 4,
-          user: "Priya Singh",
-          action: "Generated Report",
-          status: "Completed",
-          timestamp: "45 minutes ago",
-        },
-        {
-          id: 5,
-          user: "Raj Verma",
-          action: "Updated Settings",
-          status: "Completed",
-          timestamp: "3 hours ago",
-        },
-      ];
+      const response = await axiosClient.get('/activities?_sort=timestamp&_order=desc&_limit=5');
+      return response.data;
     } catch (error) {
       console.error("Error fetching activities:", error);
       throw new Error("Failed to fetch activities", { cause: error });

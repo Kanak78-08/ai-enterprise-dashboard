@@ -75,18 +75,6 @@
   ],
   "reports": [
     {
-      "id": "REP-1001",
-      "name": "Daily Analytics",
-      "category": "Operations",
-      "status": "Completed",
-      "priority": "High",
-      "createdBy": "Admin User",
-      "createdDate": "2024-06-15",
-      "description": "Daily system operations report with performance metrics",
-      "startDate": "2024-06-15",
-      "endDate": "2024-06-15"
-    },
-    {
       "id": "REP-1002",
       "name": "Weekly Sales Report",
       "category": "Sales",
@@ -255,39 +243,40 @@
   ],
   "activities": [
     {
-      "id": 1,
+      "id": "1",
       "user": "Admin User",
       "action": "Created Report",
       "status": "Completed",
       "timestamp": "2024-06-15T10:30:00Z"
     },
     {
-      "id": 2,
+      "id": "2",
       "user": "John Doe",
       "action": "Updated Dashboard",
       "status": "Completed",
       "timestamp": "2024-06-15T11:00:00Z"
     },
     {
-      "id": 3,
+      "id": "3",
       "user": "Sarah Williams",
       "action": "Exported Analytics Data",
       "status": "Completed",
       "timestamp": "2024-06-15T09:15:00Z"
     },
     {
-      "id": 4,
+      "id": "4",
       "user": "Emily Davis",
       "action": "Generated Report",
       "status": "Pending",
       "timestamp": "2024-06-15T11:45:00Z"
     },
     {
-      "id": 5,
+      "id": "5",
       "user": "Mike Johnson",
       "action": "Modified Filters",
       "status": "Completed",
       "timestamp": "2024-06-15T08:30:00Z"
     }
-  ]
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
 }

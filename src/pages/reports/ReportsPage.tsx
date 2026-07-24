@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Box, Button, Typography, IconButton, Stack, TextField } from "@mui/material";
+import { Box, Button, Typography, IconButton, Stack, TextField, Snackbar, Alert as MuiAlert } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon } from "@mui/icons-material";
 import { useForm, Controller } from "react-hook-form";
 import * as yup from "yup";
@@ -44,6 +44,14 @@ export default function ReportsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
+  const [toast, setToast] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({ open: false, message: "", severity: "success" });
+
+  const showToast = (message: string, severity: "success" | "error") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const handleCloseToast = () => setToast((prev) => ({ ...prev, open: false }));
+
   const { control, handleSubmit, reset, formState: { errors } } = useForm<ReportFormData>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -57,7 +65,7 @@ export default function ReportsPage() {
       const data = await reportService.getReports();
       setReports(data);
     } catch (error) {
-      console.error("Failed to fetch reports", error);
+      showToast("Failed to fetch reports", "error");
     } finally {
       setLoading(false);
     }
@@ -97,16 +105,17 @@ export default function ReportsPage() {
       } else {
         const newReport = {
           ...data,
-          id: generateReportId(),
+          reportId: generateReportId(),
           createdBy: "Current User",
           createdDate: new Date().toISOString().split("T")[0],
         };
         await reportService.createReport(newReport);
+        showToast("Report created successfully", "success");
       }
       handleCloseModal();
       fetchReports();
     } catch (error) {
-      console.error("Failed to save report", error);
+      showToast("Failed to save report", "error");
     }
   };
 
@@ -114,10 +123,11 @@ export default function ReportsPage() {
     if (selectedReport) {
       try {
         await reportService.deleteReport(selectedReport.id);
+        showToast("Report deleted successfully", "success");
         setDeleteModalOpen(false);
         fetchReports();
       } catch (error) {
-        console.error("Failed to delete report", error);
+        showToast("Failed to delete report", "error");
       }
     }
   };
@@ -125,7 +135,8 @@ export default function ReportsPage() {
   // Filtering
   const filteredReports = useMemo(() => {
     return reports.filter((r) => {
-      const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || r.id.toLowerCase().includes(search.toLowerCase());
+      const dispId = r.reportId || r.id;
+      const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || dispId.toLowerCase().includes(search.toLowerCase());
       const matchStatus = statusFilter ? r.status === statusFilter : true;
       const matchCategory = categoryFilter ? r.category === categoryFilter : true;
       const matchStart = dateRange.start ? r.startDate && r.startDate >= dateRange.start : true;
@@ -135,7 +146,7 @@ export default function ReportsPage() {
   }, [reports, search, statusFilter, categoryFilter, dateRange]);
 
   const columns: Column<Report>[] = [
-    { id: "id", label: "Report ID" },
+    { id: "id", label: "Report ID", render: (r) => <Typography variant="body2">{r.reportId || r.id}</Typography> },
     { id: "name", label: "Name" },
     { id: "category", label: "Category" },
     { id: "status", label: "Status", render: (r) => <StatusChip status={r.status} /> },
@@ -231,6 +242,12 @@ export default function ReportsPage() {
       >
         <Typography>Are you sure you want to delete this report?</Typography>
       </AppModal>
+
+      <Snackbar open={toast.open} autoHideDuration={6000} onClose={handleCloseToast} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
+        <MuiAlert onClose={handleCloseToast} severity={toast.severity} sx={{ width: "100%" }}>
+          {toast.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 }

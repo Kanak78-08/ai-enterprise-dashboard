@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAppDispatch } from "../../redux/hooks";
 import { loginSuccess } from "../../redux/auth/authSlice";
 import { authApi } from "../../api/authApi";
@@ -18,7 +18,7 @@ import {
   Container,
   Card,
   CardContent,
-  Link,
+  Link as MuiLink,
   Checkbox,
   FormControlLabel,
   Divider,
@@ -366,8 +366,9 @@ function Login() {
                     </Typography>
                   }
                 />
-                <Link
-                  href="#"
+                <MuiLink
+                  component={RouterLink}
+                  to="/forgot-password"
                   sx={{
                     fontSize: "0.9rem",
                     color: "#5844FF",
@@ -379,7 +380,7 @@ function Login() {
                   }}
                 >
                   Forgot password?
-                </Link>
+                </MuiLink>
               </Box>
 
               {/* Submit Button */}
@@ -516,8 +517,9 @@ function Login() {
                 }}
               >
                 Don't have an account?{" "}
-                <Link
-                  href="#"
+                <MuiLink
+                  component={RouterLink}
+                  to="/signup"
                   sx={{
                     color: "#5844FF",
                     textDecoration: "none",
@@ -528,7 +530,7 @@ function Login() {
                   }}
                 >
                   Sign up
-                </Link>
+                </MuiLink>
               </Typography>
             </form>
 

@@ -1,5 +1,6 @@
 export interface User {
   id?: string;
+  userId?: string;
   email: string;
   password?: string;
   name?: string;
@@ -10,6 +11,7 @@ export interface User {
 
 export interface Report {
   id: string;
+  reportId?: string;
   name: string;
   category: string;
   status: string;

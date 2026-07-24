@@ -7,10 +7,10 @@ interface StatusChipProps extends ChipProps {
   status: string;
 }
 
-export default function StatusChip({ status, ...props }: StatusChipProps) {
+export default function StatusChip({ status = "Unknown", ...props }: StatusChipProps) {
   let color: "default" | "primary" | "secondary" | "error" | "warning" | "info" | "success" = "default";
   
-  const statusLower = status.toLowerCase();
+  const statusLower = String(status).toLowerCase();
   if (statusLower === "completed" || statusLower === "active") color = "success";
   else if (statusLower === "pending") color = "warning";
   else if (statusLower === "failed" || statusLower === "inactive") color = "error";

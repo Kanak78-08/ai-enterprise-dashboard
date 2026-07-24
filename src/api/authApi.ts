@@ -3,8 +3,6 @@ import type { LoginCredentials, User } from "../types";
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<{ token: string; user: User }> => {
-    // Since json-server doesn't natively support POST /auth/login for JWT,
-    // we simulate the backend logic here by fetching the user and generating a mock token.
     const response = await axiosClient.get(`/users?email=${credentials.email}`);
     
     if (!response.data || response.data.length === 0) {
@@ -19,7 +17,6 @@ export const authApi = {
 
     const token = "mock-jwt-token-" + Math.random().toString(36).substring(7);
 
-    // Return the required shape
     return {
       token,
       user: {
@@ -30,4 +27,44 @@ export const authApi = {
       },
     };
   },
+  
+  signup: async (data: any): Promise<{ token: string; user: User }> => {
+    // Check if email already exists
+    const checkResponse = await axiosClient.get(`/users?email=${data.email}`);
+    if (checkResponse.data && checkResponse.data.length > 0) {
+      throw new Error("Email already registered");
+    }
+
+    const newUser = {
+      ...data,
+      role: "Viewer", // Default role
+      status: "Active",
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await axiosClient.post(`/users`, newUser);
+    const user = response.data;
+    const token = "mock-jwt-token-" + Math.random().toString(36).substring(7);
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    };
+  },
+  
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await axiosClient.get(`/users?email=${email}`);
+    
+    if (!response.data || response.data.length === 0) {
+      throw new Error("Email not found");
+    }
+
+    // Mock sending email
+    return { message: "Password reset instructions sent to your email" };
+  }
 };
