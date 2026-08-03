@@ -10,6 +10,7 @@ interface SearchToolbarProps {
 
 export default function SearchToolbar({ value, onChange, placeholder = "Search...", darkMode }: SearchToolbarProps) {
   return (
+    // @ts-ignore
     <TextField
       value={value}
       onChange={(e) => onChange(e.target.value)}

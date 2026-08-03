@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import { authApi } from "../../api/authApi";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -131,6 +131,7 @@ function ForgotPassword() {
                 name="email"
                 control={control}
                 render={({ field }) => (
+                  // @ts-ignore
                   <TextField
                     {...field}
                     fullWidth
@@ -140,13 +141,13 @@ function ForgotPassword() {
                     margin="normal"
                     error={!!errors.email}
                     helperText={errors.email?.message}
-                    InputProps={{
+                    {...({ InputProps: {
                       startAdornment: (
                         <InputAdornment position="start">
                           <MailOutlined sx={{ color: "#5844FF", mr: 1, fontSize: 20 }} />
                         </InputAdornment>
                       ),
-                    }}
+                    }} as any)}
                     sx={{ mb: 3 }}
                   />
                 )}

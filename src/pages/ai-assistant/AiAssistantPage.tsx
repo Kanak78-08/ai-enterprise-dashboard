@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography, Paper, useTheme } from "@mui/material";
 import ChatWindow from "../../components/ai/ChatWindow";
 

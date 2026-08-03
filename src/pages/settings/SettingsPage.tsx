@@ -1,5 +1,5 @@
 import { Box, Typography, Card, CardContent, Switch, FormControlLabel, Button, TextField, Alert } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -37,7 +37,7 @@ export default function SettingsPage({ darkMode, setDarkMode }: SettingsPageProp
     localStorage.setItem("dashNotif", e.target.checked ? "true" : "false");
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = () => {
     // Mock changing password
     setMsg({ type: "success", text: "Password updated successfully!" });
     reset();

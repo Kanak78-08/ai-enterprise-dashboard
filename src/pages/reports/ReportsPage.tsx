@@ -13,6 +13,9 @@ import StatusChip from "../../components/common/StatusChip";
 import { reportService } from "../../services/reportService";
 import type { Report } from "../../types";
 import { useTheme } from "@mui/material/styles";
+import { useAppSelector } from "../../redux/hooks";
+import AISearchBar from "../../components/ai/AISearchBar";
+import ActiveFilters from "../../components/dashboard/ActiveFilters";
 
 const schema = yup.object({
   name: yup.string().required("Report Name is required"),
@@ -28,7 +31,6 @@ type ReportFormData = yup.InferType<typeof schema>;
 
 export default function ReportsPage() {
   const theme = useTheme();
-  // We'll pass darkMode as false or check from theme later, but the layout is already handling app background.
   const darkMode = theme.palette.mode === "dark";
 
   const [reports, setReports] = useState<Report[]>([]);
@@ -38,6 +40,9 @@ export default function ReportsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
+
+  // AI filters from Redux
+  const { activeFilters } = useAppSelector((s) => s.ai);
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
@@ -75,17 +80,19 @@ export default function ReportsPage() {
     fetchReports();
   }, []);
 
+  // Sync AI filters with local filters
+  useEffect(() => {
+    if (activeFilters.status) setStatusFilter(activeFilters.status);
+    if (activeFilters.category) setCategoryFilter(activeFilters.category);
+  }, [activeFilters]);
+
   const handleOpenModal = (report?: Report) => {
     if (report) {
       setSelectedReport(report);
       reset({
-        name: report.name,
-        category: report.category,
-        priority: report.priority,
-        status: report.status,
-        startDate: report.startDate || "",
-        endDate: report.endDate || "",
-        description: report.description || "",
+        name: report.name, category: report.category, priority: report.priority,
+        status: report.status, startDate: report.startDate || "",
+        endDate: report.endDate || "", description: report.description || "",
       });
     } else {
       setSelectedReport(null);
@@ -104,10 +111,8 @@ export default function ReportsPage() {
         await reportService.updateReport(selectedReport.id, data);
       } else {
         const newReport = {
-          ...data,
-          reportId: generateReportId(),
-          createdBy: "Current User",
-          createdDate: new Date().toISOString().split("T")[0],
+          ...data, reportId: generateReportId(),
+          createdBy: "Current User", createdDate: new Date().toISOString().split("T")[0],
         };
         await reportService.createReport(newReport);
         showToast("Report created successfully", "success");
@@ -132,18 +137,28 @@ export default function ReportsPage() {
     }
   };
 
-  // Filtering
+  // Filtering – includes AI filters
   const filteredReports = useMemo(() => {
     return reports.filter((r) => {
       const dispId = r.reportId || r.id;
       const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || dispId.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter ? r.status === statusFilter : true;
-      const matchCategory = categoryFilter ? r.category === categoryFilter : true;
+      
+      // Use AI filter OR manual filter
+      const effectiveStatus = activeFilters.status || statusFilter;
+      const effectiveCategory = activeFilters.category || categoryFilter;
+      const effectivePriority = activeFilters.priority;
+      const effectiveCreatedBy = activeFilters.createdBy;
+      
+      const matchStatus = effectiveStatus ? r.status === effectiveStatus : true;
+      const matchCategory = effectiveCategory ? r.category === effectiveCategory : true;
+      const matchPriority = effectivePriority ? r.priority === effectivePriority : true;
+      const matchCreatedBy = effectiveCreatedBy ? r.createdBy.toLowerCase().includes(effectiveCreatedBy.toLowerCase()) : true;
       const matchStart = dateRange.start ? r.startDate && r.startDate >= dateRange.start : true;
       const matchEnd = dateRange.end ? r.endDate && r.endDate <= dateRange.end : true;
-      return matchSearch && matchStatus && matchCategory && matchStart && matchEnd;
+      
+      return matchSearch && matchStatus && matchCategory && matchPriority && matchCreatedBy && matchStart && matchEnd;
     });
-  }, [reports, search, statusFilter, categoryFilter, dateRange]);
+  }, [reports, search, statusFilter, categoryFilter, dateRange, activeFilters]);
 
   const columns: Column<Report>[] = [
     { id: "id", label: "Report ID", render: (r) => <Typography variant="body2">{r.reportId || r.id}</Typography> },
@@ -153,9 +168,7 @@ export default function ReportsPage() {
     { id: "priority", label: "Priority" },
     { id: "createdBy", label: "Created By" },
     {
-      id: "actions",
-      label: "Actions",
-      align: "center",
+      id: "actions", label: "Actions", align: "center",
       render: (r) => (
         <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
           <IconButton size="small" color="info"><ViewIcon fontSize="small" /></IconButton>
@@ -168,54 +181,36 @@ export default function ReportsPage() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
         <Typography variant="h5" sx={{ fontWeight: "bold" }}>Reports Management</Typography>
-        <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => handleOpenModal()}>
-          Create Report
-        </Button>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <AISearchBar darkMode={darkMode} />
+          <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => handleOpenModal()}>
+            Create Report
+          </Button>
+        </Box>
       </Box>
+
+      {/* AI Active Filters */}
+      <Box sx={{ mb: 2 }}><ActiveFilters darkMode={darkMode} /></Box>
 
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}>
         <SearchToolbar value={search} onChange={setSearch} placeholder="Search by name or ID..." darkMode={darkMode} />
-        <FilterDropdown
-          label="Status" value={statusFilter} onChange={setStatusFilter} darkMode={darkMode}
-          options={[{ label: "Completed", value: "Completed" }, { label: "Pending", value: "Pending" }, { label: "Failed", value: "Failed" }]}
-        />
-        <FilterDropdown
-          label="Category" value={categoryFilter} onChange={setCategoryFilter} darkMode={darkMode}
-          options={[{ label: "Operations", value: "Operations" }, { label: "Analytics", value: "Analytics" }, { label: "Maintenance", value: "Maintenance" }, { label: "Sales", value: "Sales" }]}
-        />
-        <TextField
-          type="date" size="small" value={dateRange.start} onChange={(e) => setDateRange(p => ({ ...p, start: e.target.value }))}
-          slotProps={{ inputLabel: { shrink: true } }} label="Start Date"
-        />
-        <TextField
-          type="date" size="small" value={dateRange.end} onChange={(e) => setDateRange(p => ({ ...p, end: e.target.value }))}
-          slotProps={{ inputLabel: { shrink: true } }} label="End Date"
-        />
+        <FilterDropdown label="Status" value={statusFilter} onChange={setStatusFilter} darkMode={darkMode}
+          options={[{ label: "Completed", value: "Completed" }, { label: "Pending", value: "Pending" }, { label: "Failed", value: "Failed" }]} />
+        <FilterDropdown label="Category" value={categoryFilter} onChange={setCategoryFilter} darkMode={darkMode}
+          options={[{ label: "Operations", value: "Operations" }, { label: "Analytics", value: "Analytics" }, { label: "Maintenance", value: "Maintenance" }, { label: "Sales", value: "Sales" }]} />
+        <TextField type="date" size="small" value={dateRange.start} onChange={(e) => setDateRange(p => ({ ...p, start: e.target.value }))}
+          slotProps={{ inputLabel: { shrink: true } }} label="Start Date" />
+        <TextField type="date" size="small" value={dateRange.end} onChange={(e) => setDateRange(p => ({ ...p, end: e.target.value }))}
+          slotProps={{ inputLabel: { shrink: true } }} label="End Date" />
       </Box>
 
-      <AppDataTable
-        columns={columns}
-        data={filteredReports}
-        loading={loading}
-        clientPagination
-        darkMode={darkMode}
-      />
+      <AppDataTable columns={columns} data={filteredReports} loading={loading} clientPagination darkMode={darkMode} />
 
       {/* Create / Edit Modal */}
-      <AppModal
-        open={modalOpen}
-        onClose={handleCloseModal}
-        title={selectedReport ? "Edit Report" : "Create Report"}
-        darkMode={darkMode}
-        actions={
-          <>
-            <Button onClick={handleCloseModal}>Cancel</Button>
-            <Button variant="contained" onClick={handleSubmit(onSubmit as any)}>Save</Button>
-          </>
-        }
-      >
+      <AppModal open={modalOpen} onClose={handleCloseModal} title={selectedReport ? "Edit Report" : "Create Report"} darkMode={darkMode}
+        actions={<><Button onClick={handleCloseModal}>Cancel</Button><Button variant="contained" onClick={handleSubmit(onSubmit as any)}>Save</Button></>}>
         <Box component="form" sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
           <Controller name="name" control={control} render={({ field }) => <TextField {...field} label="Report Name" error={!!errors.name} helperText={errors.name?.message} fullWidth size="small" />} />
           <Controller name="category" control={control} render={({ field }) => <TextField {...field} label="Category" error={!!errors.category} helperText={errors.category?.message} fullWidth size="small" />} />
@@ -228,25 +223,13 @@ export default function ReportsPage() {
       </AppModal>
 
       {/* Delete Confirmation Modal */}
-      <AppModal
-        open={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        title="Confirm Delete"
-        darkMode={darkMode}
-        actions={
-          <>
-            <Button onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
-            <Button variant="contained" color="error" onClick={confirmDelete}>Delete</Button>
-          </>
-        }
-      >
+      <AppModal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Confirm Delete" darkMode={darkMode}
+        actions={<><Button onClick={() => setDeleteModalOpen(false)}>Cancel</Button><Button variant="contained" color="error" onClick={confirmDelete}>Delete</Button></>}>
         <Typography>Are you sure you want to delete this report?</Typography>
       </AppModal>
 
       <Snackbar open={toast.open} autoHideDuration={6000} onClose={handleCloseToast} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <MuiAlert onClose={handleCloseToast} severity={toast.severity} sx={{ width: "100%" }}>
-          {toast.message}
-        </MuiAlert>
+        <MuiAlert onClose={handleCloseToast} severity={toast.severity} sx={{ width: "100%" }}>{toast.message}</MuiAlert>
       </Snackbar>
     </Box>
   );
