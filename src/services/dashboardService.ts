@@ -124,10 +124,12 @@ export interface DashboardStats {
 }
 
 export interface Notification {
-  id: number;
+  id: string | number;
+  title?: string;
   message: string;
   type: "info" | "warning" | "success" | "error";
   timestamp?: string;
+  isRead?: boolean;
 }
 
 export interface Insight {
@@ -176,32 +178,26 @@ export const dashboardService = {
    */
   getNotifications: async (): Promise<Notification[]> => {
     try {
-      await simulateDelay(700);
-      // Mock notifications from db.json
-      return [
-        {
-          id: 1,
-          message: "High failure rate detected",
-          type: "warning",
-          timestamp: "5 minutes ago",
-        },
-        {
-          id: 2,
-          message: "Weekly report generated",
-          type: "success",
-          timestamp: "30 minutes ago",
-        },
-        {
-          id: 3,
-          message: "System maintenance scheduled",
-          type: "info",
-          timestamp: "1 hour ago",
-        },
-      ];
+      const response = await axiosClient.get('/notifications?_sort=timestamp&_order=desc&_limit=5');
+      return response.data;
     } catch (error) {
       console.error("Error fetching notifications:", error);
       throw new Error("Failed to fetch notifications", { cause: error });
     }
+  },
+
+  markNotificationRead: async (id: string | number): Promise<Notification> => {
+    const response = await axiosClient.patch(`/notifications/${id}`, { isRead: true });
+    return response.data;
+  },
+
+  markAllNotificationsRead: async (): Promise<void> => {
+    const notifications = await dashboardService.getNotifications();
+    await Promise.all(
+      notifications
+        .filter((notification) => !notification.isRead)
+        .map((notification) => dashboardService.markNotificationRead(notification.id))
+    );
   },
 
   /**

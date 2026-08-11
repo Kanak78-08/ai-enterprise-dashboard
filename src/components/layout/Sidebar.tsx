@@ -10,6 +10,7 @@ import {
   IconButton,
   Typography,
   Divider,
+  Collapse,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -23,6 +24,13 @@ import {
   Menu as MenuIcon,
   Close as CloseIcon,
   Logout as LogoutIcon,
+  ExpandMore as ExpandMoreIcon,
+  Assessment as AIReportIcon,
+  AutoFixHigh as AutofillIcon,
+  Email as EmailIcon,
+  NotificationsActive as NotifIcon,
+  LibraryBooks as PromptIcon,
+  History as HistoryIcon,
 } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { logout } from "../../redux/auth/authSlice";
@@ -30,6 +38,16 @@ import { logout } from "../../redux/auth/authSlice";
 interface SidebarProps {
   darkMode: boolean;
 }
+
+const AI_SUB_ITEMS = [
+  { label: "Chat", icon: AIIcon, tab: 0 },
+  { label: "Report Generator", icon: AIReportIcon, tab: 1 },
+  { label: "Form Autofill", icon: AutofillIcon, tab: 2 },
+  { label: "Email Assistant", icon: EmailIcon, tab: 3 },
+  { label: "Notifications", icon: NotifIcon, tab: 4 },
+  { label: "Prompt Library", icon: PromptIcon, tab: 5 },
+  { label: "AI History", icon: HistoryIcon, tab: 6 },
+];
 
 const menuItems = [
   { label: "Dashboard", icon: DashboardIcon, path: "/dashboard", roles: ["Admin", "Analyst", "Viewer"] },
@@ -48,6 +66,8 @@ function Sidebar({ darkMode }: SidebarProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isAIActive = location.pathname.startsWith("/ai-assistant");
+  const [aiExpanded, setAiExpanded] = useState(isAIActive);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -132,66 +152,131 @@ function Sidebar({ darkMode }: SidebarProps) {
           flex: 1,
           py: 2,
           px: 1,
+          overflowY: "auto",
         }}
       >
         {menuItems.filter(item => item.roles.includes(role || "Viewer")).map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || (item.path === "/ai-assistant" && isAIActive);
           const Icon = item.icon;
+          const isAIItem = item.path === "/ai-assistant";
 
           return (
-            <ListItem
-              key={item.label}
-              onClick={() => handleNavigate(item.path)}
-              sx={{
-                mb: 0.5,
-                borderRadius: 1.5,
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                backgroundColor: isActive
-                  ? "rgba(88, 68, 255, 0.15)"
-                  : "transparent",
-                color: isActive ? "#5844FF" : darkMode ? "#ccc" : "#666",
-                "&:hover": {
-                  backgroundColor: darkMode
-                    ? "rgba(88, 68, 255, 0.1)"
-                    : "rgba(88, 68, 255, 0.08)",
-                  color: "#5844FF",
-                },
-                pl: 2,
-              }}
-            >
-              <ListItemIcon
+            <Box key={item.label}>
+              <ListItem
+                onClick={() => {
+                  if (isAIItem) {
+                    setAiExpanded((prev) => !prev);
+                    handleNavigate(item.path);
+                  } else {
+                    handleNavigate(item.path);
+                  }
+                }}
                 sx={{
-                  color: "inherit",
-                  minWidth: 40,
+                  mb: 0.5,
+                  borderRadius: 1.5,
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  backgroundColor: isActive
+                    ? "rgba(88, 68, 255, 0.15)"
+                    : "transparent",
+                  color: isActive ? "#5844FF" : darkMode ? "#ccc" : "#666",
+                  "&:hover": {
+                    backgroundColor: darkMode
+                      ? "rgba(88, 68, 255, 0.1)"
+                      : "rgba(88, 68, 255, 0.08)",
+                    color: "#5844FF",
+                  },
+                  pl: 2,
                 }}
               >
-                <Icon />
-              </ListItemIcon>
-              <Box sx={{ flex: 1 }}>
-                <ListItemText
-                  primary={item.label}
+                <ListItemIcon
                   sx={{
-                    "& .MuiListItemText-primary": {
-                      fontWeight: isActive ? 600 : 500,
-                      fontSize: "0.95rem",
-                    },
+                    color: "inherit",
+                    minWidth: 40,
                   }}
-                />
-              </Box>
-              {isActive && (
-                <Box
-                  sx={{
-                    width: 4,
-                    height: 24,
-                    borderRadius: "2px",
-                    background:
-                      "linear-gradient(135deg, #5844FF 0%, #7c6fff 100%)",
-                    ml: 1,
-                  }}
-                />
+                >
+                  <Icon />
+                </ListItemIcon>
+                <Box sx={{ flex: 1 }}>
+                  <ListItemText
+                    primary={item.label}
+                    sx={{
+                      "& .MuiListItemText-primary": {
+                        fontWeight: isActive ? 600 : 500,
+                        fontSize: "0.95rem",
+                      },
+                    }}
+                  />
+                </Box>
+                {isAIItem && (
+                  <ExpandMoreIcon
+                    sx={{
+                      fontSize: 18,
+                      transform: aiExpanded ? "rotate(180deg)" : "none",
+                      transition: "transform 0.2s",
+                      opacity: 0.6,
+                    }}
+                  />
+                )}
+                {isActive && !isAIItem && (
+                  <Box
+                    sx={{
+                      width: 4,
+                      height: 24,
+                      borderRadius: "2px",
+                      background:
+                        "linear-gradient(135deg, #5844FF 0%, #7c6fff 100%)",
+                      ml: 1,
+                    }}
+                  />
+                )}
+              </ListItem>
+
+              {/* AI Sub-Menu */}
+              {isAIItem && (
+                <Collapse in={aiExpanded} timeout="auto" unmountOnExit>
+                  <List disablePadding sx={{ pl: 1 }}>
+                    {AI_SUB_ITEMS.map((sub) => {
+                      const SubIcon = sub.icon;
+                      return (
+                        <ListItem
+                          key={sub.label}
+                          onClick={() => handleNavigate(`/ai-assistant?tab=${sub.tab}`)}
+                          sx={{
+                            mb: 0.25,
+                            borderRadius: 1.5,
+                            cursor: "pointer",
+                            py: 0.75,
+                            pl: 4,
+                            transition: "all 0.2s",
+                            color: darkMode ? "#aaa" : "#777",
+                            "&:hover": {
+                              backgroundColor: darkMode
+                                ? "rgba(88, 68, 255, 0.08)"
+                                : "rgba(88, 68, 255, 0.06)",
+                              color: "#5844FF",
+                            },
+                          }}
+                        >
+                          <ListItemIcon sx={{ color: "inherit", minWidth: 32 }}>
+                            <SubIcon sx={{ fontSize: 16 }} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={sub.label}
+                            sx={{
+                              "& .MuiListItemText-primary": {
+                                fontSize: "0.82rem",
+                                fontWeight: 400,
+                              },
+                            }}
+                          />
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                </Collapse>
               )}
-            </ListItem>
+            </Box>
           );
         })}
       </List>

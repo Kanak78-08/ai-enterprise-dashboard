@@ -29,6 +29,16 @@ const postJson = async (path, body) => {
   return response.json();
 };
 
+const requestJson = async (path, options = {}) => {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
+  });
+
+  assert.equal(response.ok, true, `${path} returned ${response.status}`);
+  return response.status === 204 ? null : response.json();
+};
+
 test("AI mock routes support search, summaries, recommendations, chart explanations, and collections", async () => {
   const server = spawn(process.execPath, ["server/json-server.js"], {
     cwd: process.cwd(),
@@ -67,6 +77,73 @@ test("AI mock routes support search, summaries, recommendations, chart explanati
     });
     assert.equal(explanation.trend, "upward");
     assert.ok(explanation.keyInsights.length > 0);
+
+    const report = await postJson("/api/ai/generate-report", {
+      reportType: "Weekly",
+      dateRange: "Last 7 Days",
+      team: "Operations",
+      category: "Maintenance",
+    });
+    assert.equal(report.reportType, "Weekly");
+    assert.ok(report.sections.length >= 3);
+
+    const autofill = await postJson("/api/ai/autofill", { prompt: "High priority weekly maintenance report for Mumbai" });
+    assert.equal(autofill.priority, "High");
+    assert.equal(autofill.plant, "Mumbai");
+
+    const email = await postJson("/api/ai/generate-email", { context: "Performance Update", recipientName: "Ops", senderName: "AI" });
+    assert.match(email.subject, /Performance Update/);
+    assert.match(email.body, /Dear Ops/);
+
+    const notification = await postJson("/api/ai/generate-notification", { type: "warning", context: "Pending Review" });
+    assert.equal(notification.type, "warning");
+    assert.equal(notification.title, "Pending Review");
+
+    const promptId = `test-prompt-${Date.now()}`;
+    const createdPrompt = await postJson("/api/ai/prompts", {
+      id: promptId,
+      name: "Test Prompt",
+      prompt: "Summarize test data",
+      category: "Custom",
+      isFavorite: false,
+    });
+    assert.equal(createdPrompt.id, promptId);
+
+    const usedPrompt = await requestJson(`/api/ai/prompts/${promptId}/use`, { method: "POST" });
+    assert.equal(usedPrompt.usedCount, 1);
+    assert.ok(usedPrompt.lastUsed);
+
+    const updatedPrompt = await requestJson(`/api/ai/prompts/${promptId}`, {
+      method: "PUT",
+      body: JSON.stringify({ isFavorite: true }),
+    });
+    assert.equal(updatedPrompt.isFavorite, true);
+
+    const prompts = await requestJson("/api/ai/prompts");
+    assert.ok(prompts.some((item) => item.id === promptId));
+
+    await requestJson(`/api/ai/prompts/${promptId}`, { method: "DELETE" });
+
+    const conversation = await postJson("/api/ai/conversations", { firstMessage: "Review the pending queue" });
+    assert.ok(conversation.id);
+    assert.equal(conversation.messages.length, 0);
+
+    const message = await requestJson(`/api/ai/conversations/${conversation.id}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ id: `msg-${Date.now()}`, role: "user", content: "Show failed reports", timestamp: Date.now() }),
+    });
+    assert.equal(message.role, "user");
+
+    const aiResponse = await requestJson(`/api/ai/conversations/${conversation.id}/respond`, {
+      method: "POST",
+      body: JSON.stringify({ userMessage: "What should I do next?", conversationHistory: [message] }),
+    });
+    assert.match(aiResponse.response, /What should I do next/);
+
+    const conversations = await requestJson("/api/ai/conversations");
+    assert.ok(conversations.some((item) => item.id === conversation.id && item.messages.length === 1));
+
+    await requestJson(`/api/ai/conversations/${conversation.id}`, { method: "DELETE" });
   } finally {
     server.kill();
   }

@@ -9,6 +9,7 @@ import {
   Avatar,
   Typography,
   Divider,
+  ListItemText,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -19,10 +20,12 @@ import {
   AccountCircle as AccountIcon,
   Settings as SettingsIcon,
 } from "@mui/icons-material";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { logout } from "../../redux/auth/authSlice";
 import { useNavigate } from "react-router-dom";
+import { dashboardService } from "../../services/dashboardService";
+import type { Notification } from "../../services/dashboardService";
 
 interface NavbarProps {
   darkMode: boolean;
@@ -39,6 +42,7 @@ function Navbar({ darkMode, onToggleDarkMode }: NavbarProps) {
     null
   );
   const [anchorElNotif, setAnchorElNotif] = useState<null | HTMLElement>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElProfile(event.currentTarget);
@@ -56,6 +60,32 @@ function Navbar({ darkMode, onToggleDarkMode }: NavbarProps) {
     setAnchorElNotif(null);
   };
 
+  const loadNotifications = useCallback(async () => {
+    try {
+      setNotifications(await dashboardService.getNotifications());
+    } catch {
+      setNotifications([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadNotifications();
+    const intervalId = window.setInterval(loadNotifications, 15000);
+    return () => window.clearInterval(intervalId);
+  }, [loadNotifications]);
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.isRead) {
+      await dashboardService.markNotificationRead(notification.id);
+      await loadNotifications();
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    await dashboardService.markAllNotificationsRead();
+    await loadNotifications();
+  };
+
   const handleLogout = () => {
     dispatch(logout());
     localStorage.removeItem("token");
@@ -66,7 +96,7 @@ function Navbar({ darkMode, onToggleDarkMode }: NavbarProps) {
 
   const userName = user?.name || "User";
   const userInitial = userName.charAt(0).toUpperCase();
-  const unreadNotifications = 3;
+  const unreadNotifications = notifications.filter((notification) => !notification.isRead).length;
 
   return (
     <AppBar
@@ -176,18 +206,39 @@ function Navbar({ darkMode, onToggleDarkMode }: NavbarProps) {
               Notifications
             </MenuItem>
             <Divider />
-            <MenuItem>New report generated</MenuItem>
-            <MenuItem>User activity detected</MenuItem>
-            <MenuItem>System update available</MenuItem>
+            {notifications.length === 0 ? (
+              <MenuItem disabled>No notifications yet</MenuItem>
+            ) : (
+              notifications.map((notification) => (
+                <MenuItem
+                  key={notification.id}
+                  onClick={() => handleNotificationClick(notification)}
+                  sx={{
+                    alignItems: "flex-start",
+                    whiteSpace: "normal",
+                    borderLeft: notification.isRead ? "3px solid transparent" : "3px solid #5844FF",
+                    background: notification.isRead ? "transparent" : darkMode ? "rgba(88,68,255,0.14)" : "rgba(88,68,255,0.06)",
+                  }}
+                >
+                  <ListItemText
+                    primary={notification.title || notification.type}
+                    secondary={notification.message}
+                    primaryTypographyProps={{ fontWeight: notification.isRead ? 500 : 700, fontSize: "0.9rem" }}
+                    secondaryTypographyProps={{ fontSize: "0.78rem", color: darkMode ? "#B8B8B8" : "#666" }}
+                  />
+                </MenuItem>
+              ))
+            )}
             <Divider />
             <MenuItem
+              onClick={handleMarkAllRead}
               sx={{
                 textAlign: "center",
                 color: "#5844FF",
                 fontWeight: 600,
               }}
             >
-              View All
+              Mark All Read
             </MenuItem>
           </Menu>
 

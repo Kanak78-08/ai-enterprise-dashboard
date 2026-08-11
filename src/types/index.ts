@@ -115,10 +115,12 @@ export interface KpiData {
 }
 
 export interface Notification {
-  id: number;
+  id: string | number;
+  title?: string;
   message: string;
   type: "info" | "warning" | "success" | "error";
   timestamp?: string;
+  isRead?: boolean;
 }
 
 export interface Insight {
